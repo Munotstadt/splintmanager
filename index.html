@@ -6,7 +6,7 @@
 <title>Splint Tracker — Munotstadt</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <style>
   :root{
     --red:#E30613;
@@ -1178,6 +1178,10 @@ function xirr(cashflows){
 // investment out instead of cash out / investment in). If the sale-side codes should differ,
 // they can be adjusted here once confirmed.
 function buildBookingEntriesWorkbook(txId){
+  if (typeof XLSX === 'undefined'){
+    log('The Excel library (SheetJS, loaded from cdnjs.cloudflare.com) has not finished loading yet — check your network/firewall for that domain and try again in a moment.', true);
+    return null;
+  }
   const t = DB.transactions.find(x => x.id === txId);
   if (!t) return null;
   const m = DB.master[t.assetId];

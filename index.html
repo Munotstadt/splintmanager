@@ -205,49 +205,9 @@
   }
   ::-webkit-scrollbar{height:8px; width:8px;}
   ::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
-
-  /* ---------- Auth gate ---------- */
-  #auth-gate{
-    position:fixed; inset:0; z-index:1000; background:#fff;
-    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px;
-  }
-  #auth-gate .gate-card{
-    text-align:center; max-width:360px; padding:32px 28px;
-    border:1px solid var(--line); border-radius:8px;
-  }
-  #auth-gate h1{font-size:20px; text-transform:uppercase; letter-spacing:0.02em; margin-bottom:4px;}
-  #auth-gate .sub{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:22px;}
-  #auth-gate .gate-msg{font-size:13px; color:var(--ink-soft); margin:14px 0;}
-  #auth-gate .gate-msg.err{color:var(--red);}
-  #google-signin-btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:10px;
-    font-family:'Inter',sans-serif; font-weight:500; font-size:14px;
-    background:#fff; color:var(--ink); border:1px solid var(--line); border-radius:var(--radius);
-    padding:10px 18px; cursor:pointer; width:100%;
-  }
-  #google-signin-btn:hover{border-color:var(--ink);}
-  #google-signin-btn svg{width:18px; height:18px; flex-shrink:0;}
-  #auth-gate[hidden]{display:none;}
-  .user-badge{display:flex; align-items:center; gap:10px;}
-  .user-badge img{width:22px; height:22px; border-radius:50%;}
-  #signout-btn{background:none; border:1px solid var(--line); color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 10px; border-radius:var(--radius); cursor:pointer;}
-  #signout-btn:hover{border-color:var(--ink); color:var(--ink);}
 </style>
 </head>
 <body>
-
-<!-- ============ AUTH GATE ============ -->
-<div id="auth-gate">
-  <div class="gate-card">
-    <h1>Splint Tracker</h1>
-    <div class="sub">Munotstadt · Investment Monitoring</div>
-    <button id="google-signin-btn">
-      <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.9 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.1 5.6 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.8 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.1 5.6 29.3 4 24 4c-7.6 0-14.1 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10-1.8 13.6-4.9l-6.3-5.3C29.3 35.4 26.8 36 24 36c-5.4 0-9.9-3.1-11.4-7.6l-6.5 5C9.7 39.7 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.9 2.6-2.5 4.8-4.7 6.3l6.3 5.3C40.9 36.6 44 30.9 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
-      Sign in with Google
-    </button>
-    <div class="gate-msg" id="gate-msg"></div>
-  </div>
-</div>
 
 <header class="topbar">
   <div class="brand">
@@ -256,14 +216,7 @@
       <div class="sub">Munotstadt · Investment Monitoring</div>
     </div>
   </div>
-  <div style="display:flex; align-items:center; gap:16px;">
-    <div class="sub mono" id="header-status" style="text-align:right;">No data loaded</div>
-    <div class="user-badge" id="user-badge" style="display:none;">
-      <img id="user-avatar" src="" alt="">
-      <span class="mono" id="user-email" style="font-size:11px; color:var(--ink-soft);"></span>
-      <button id="signout-btn">Sign out</button>
-    </div>
-  </div>
+  <div class="sub mono" id="header-status" style="text-align:right;">No data loaded</div>
 </header>
 
 <nav class="tabs">
@@ -616,25 +569,38 @@
   <!-- ============ DATA MANAGEMENT ============ -->
   <section id="view-data" class="view">
     <div class="section-title">
-      <h2>1 · Neon Connection</h2>
-      <span class="hint">splint_masterdata / splint_prices / splint_transactions live in Neon Postgres</span>
+      <h2>1 · GitHub Connection</h2>
+      <span class="hint">prices.csv / transactions.csv / stammdaten.csv only live in the repo</span>
     </div>
     <div class="card upload-card">
       <div class="desc">
-        Data is stored in Neon Postgres, accessed through the Neon Data API and secured by Neon Auth (Google
-        sign-in, restricted to approved accounts). <strong>Every change is saved to Neon immediately</strong> —
-        uploads, master-data edits, all of it. There's no separate local state that would need to be saved
-        manually anymore, and no token to manage in this browser.
+        Personal Access Token with <strong>Contents: Read and write</strong> on this repo (Fine-grained PAT under
+        github.com → Settings → Developer settings → Personal access tokens). Once connected, <strong>every change
+        is saved to GitHub immediately</strong> — uploads, master-data edits, all of it. There's no separate local
+        state that would need to be saved manually anymore.
+      </div>
+      <div class="field-grid" style="grid-template-columns:1fr 1fr 1fr 2fr;">
+        <div><label>Owner</label><input type="text" id="gh-owner" value="Munotstadt"></div>
+        <div><label>Repo</label><input type="text" id="gh-repo" value="splintdatacollector"></div>
+        <div><label>Branch</label><input type="text" id="gh-branch" value="main"></div>
+        <div><label>Personal Access Token</label><input type="password" id="gh-token" placeholder="ghp_ / github_pat_ …"></div>
       </div>
       <div class="upload-row" style="margin-top:6px;">
-        <button class="btn ghost" id="neon-refresh">Reload from Neon</button>
-        <button class="btn ghost" id="neon-export">Export current data as CSV</button>
-        <span class="hint mono" id="neon-status"></span>
+        <label class="hint" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" id="gh-remember" style="margin:0;"> Remember this connection in this browser (auto-load on open)
+        </label>
       </div>
+      <div class="upload-row" style="margin-top:6px;">
+        <button class="btn ghost" id="gh-save">Manually force-save to GitHub</button>
+        <button class="btn ghost" id="gh-forget">Forget connection</button>
+        <span class="hint mono" id="gh-status"></span>
+      </div>
+      <div class="desc" style="margin-top:4px;">Repo paths: <span class="mono">data/prices.csv</span>, <span class="mono">data/transactions.csv</span>, <span class="mono">data/stammdaten.csv</span> — created automatically on first save.</div>
+      <div class="desc" style="margin-top:4px;">With the checkbox enabled, the token is stored in this browser's <span class="mono">localStorage</span> (unencrypted) and is automatically refilled on open <em>and the latest GitHub state is loaded immediately</em> — no manual click needed. Only enable this on your own, trusted device.</div>
     </div>
 
     <div class="section-title"><h2>2 · Upload Splint exports</h2><span class="hint">Only these two buttons touch the original files from Splint</span></div>
-    <div class="desc" style="margin:-6px 0 10px;">These uploads <strong>append</strong> new rows to the Neon tables — existing rows are never overwritten or deleted (price points are updated per asset/month, transactions are deduplicated by unique ID). Saved to Neon automatically right afterwards.</div>
+    <div class="desc" style="margin:-6px 0 10px;">These uploads <strong>append</strong> new rows to prices.csv, transactions.csv and stammdaten.csv — existing rows are never overwritten or deleted (price points are updated per asset/month, transactions are deduplicated by unique ID). If GitHub is connected, this saves automatically right afterwards.</div>
     <div class="grid cols-2">
       <div class="card upload-card">
         <strong><span class="step-num">A</span>Investment Opportunities Export</strong>
@@ -668,122 +634,13 @@
 
 <footer class="foot">Splint Tracker · Munotstadt Suite · Data is stored in this GitHub repo — no separate server</footer>
 
-<script type="module">
+<script>
 /* =========================================================================
    SPLINT TRACKER
-   Vanilla JS single-page tool. Data lives in Neon Postgres, read/written via
-   the Neon Data API, gated behind Neon Auth (Google sign-in, allowlisted
-   accounts only via Row Level Security). No local persistence — every edit
-   is synced to Neon immediately.
+   Vanilla JS single-page tool. All state in memory only (no localStorage,
+   no backend). Persistence happens explicitly via CSV export/import so the
+   files can be committed to the GitHub repo between sessions.
    ========================================================================= */
-
-import { createClient } from 'https://esm.sh/@neondatabase/neon-js@0.6.2-beta';
-
-const NEON_AUTH_URL = 'https://ep-lingering-dawn-a6hy11vo.neonauth.us-west-2.aws.neon.tech/neondb/auth';
-const NEON_DATA_API_URL = 'https://ep-lingering-dawn-a6hy11vo.apirest.us-west-2.aws.neon.tech/neondb/rest/v1';
-
-const neonClient = createClient({
-  auth: { url: NEON_AUTH_URL },
-  dataApi: { url: NEON_DATA_API_URL },
-});
-
-// ---------------------------------------------------------------- DIRECT DATA API CALLS --
-// The neon-js SDK's high-level `.from()` query builder was found to intermittently omit the
-// auth token on Data API requests (silent RLS-denied failures on upsert/delete, even moments
-// after a successful authenticated read). To avoid that, all data reads/writes below fetch a
-// fresh JWT directly from Neon Auth's /get-session endpoint and call the Data API's REST
-// endpoints with a plain fetch() — verified reliable, including for 170+ row batch upserts.
-async function getFreshJwt(){
-  const res = await fetch(NEON_AUTH_URL + '/get-session', { credentials: 'include' });
-  const jwt = res.headers.get('set-auth-jwt');
-  if (!jwt) throw new Error('No active Neon Auth session (not signed in, or session expired).');
-  return jwt;
-}
-async function neonApi(path, options = {}){
-  const jwt = await getFreshJwt();
-  const res = await fetch(NEON_DATA_API_URL + path, {
-    ...options,
-    headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json', ...(options.headers || {}) },
-  });
-  if (!res.ok){
-    let msg = res.status + ' ' + res.statusText;
-    try { const j = await res.json(); msg = j.message || msg; } catch(e){ /* ignore */ }
-    throw new Error(msg);
-  }
-  if (res.status === 204) return null;
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
-function neonSelect(table, columns = '*'){
-  return neonApi('/' + table + '?select=' + encodeURIComponent(columns));
-}
-function neonUpsert(table, rows, onConflict){
-  return neonApi('/' + table + '?on_conflict=' + encodeURIComponent(onConflict), {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-    body: JSON.stringify(rows),
-  });
-}
-function neonDelete(table, filters){
-  // filters: {column: value, ...} -> exact-match .eq() filters, ANDed together
-  const qs = Object.entries(filters).map(([k,v]) => `${encodeURIComponent(k)}=eq.${encodeURIComponent(v)}`).join('&');
-  return neonApi('/' + table + '?' + qs, { method: 'DELETE' });
-}
-
-// ---------------------------------------------------------------- AUTH GATE --
-function setGateMsg(msg, isErr){
-  const el = document.getElementById('gate-msg');
-  el.textContent = msg || '';
-  el.className = 'gate-msg' + (isErr ? ' err' : '');
-}
-function showGate(){ document.getElementById('auth-gate').hidden = false; }
-function hideGate(){ document.getElementById('auth-gate').hidden = true; }
-
-async function checkAccess(){
-  // RLS restricts every table to the allowlisted account; a non-empty read from
-  // splint_masterdata (166 known assets) is our signal that this signed-in user
-  // is actually authorized, not just "has a Google account".
-  try{
-    const data = await neonSelect('splint_masterdata', 'asset_id');
-    return Array.isArray(data) && data.length > 0;
-  } catch(err){
-    return false;
-  }
-}
-
-async function handleSignedIn(user){
-  setGateMsg('Checking access…');
-  const authorized = await checkAccess();
-  if (!authorized){
-    setGateMsg('Signed in as ' + user.email + ', but this account is not authorized to view this data.', true);
-    document.getElementById('user-badge').style.display = 'none';
-    return;
-  }
-  hideGate();
-  document.getElementById('user-badge').style.display = 'flex';
-  document.getElementById('user-email').textContent = user.email;
-  if (user.image) document.getElementById('user-avatar').src = user.image;
-  await loadFromNeon();
-  renderAll();
-}
-
-document.getElementById('google-signin-btn').addEventListener('click', async () => {
-  setGateMsg('Redirecting to Google…');
-  await neonClient.auth.signIn.social({ provider: 'google', callbackURL: window.location.href });
-});
-document.getElementById('signout-btn').addEventListener('click', async () => {
-  await neonClient.auth.signOut();
-  window.location.reload();
-});
-
-(async function initAuth(){
-  const { data } = await neonClient.auth.getSession();
-  if (data && data.session && data.user){
-    await handleSignedIn(data.user);
-  } else {
-    showGate();
-  }
-})();
 
 // ---------------------------------------------------------------- STATE --
 const DB = {
@@ -861,45 +718,39 @@ function isoToDMY(d){
 }
 
 // ---------------------------------------------------------------- FX RATES (CHF conversion) --
-// Sourced from the Munotstadt securitydatacollector repo, which tracks FX pairs (e.g. "EUR/CHF")
-// alongside regular securities in the same price feed. Loaded once per session in the background;
-// tables using it re-render automatically when it becomes available.
-const FX = {loaded:false, loading:false, rates:{}}; // rates['EUR/CHF'] = [{date:Date, rate:number}, ...] ascending
-function parseGhDateTime(s){
-  // "DD.MM.YYYY HH:MM:SS" -> Date
-  if (!s) return new Date(NaN);
-  const [datePart, timePart] = s.trim().split(' ');
-  const parts = (datePart||'').split('.');
-  if (parts.length !== 3) return new Date(NaN);
-  const [dd,mm,yyyy] = parts;
-  return new Date(`${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}T${timePart||'00:00:00'}`);
-}
+// Sourced from the Munotstadt accountingdatacollector repo's fx_rates.csv (columns: Date,
+// Currency, Rate, CollectedAt — Rate is already the Currency→CHF rate, e.g. Currency "EUR" with
+// Rate 0.9223 means 1 EUR = 0.9223 CHF). Loaded once per session in the background; tables using
+// it re-render automatically when it becomes available.
+const FX = {loaded:false, loading:false, rates:{}}; // rates['EUR'] = [{date:Date, rate:number}, ...] ascending
 async function loadFxRates(){
   if (FX.loaded || FX.loading) return;
   FX.loading = true;
   try{
-    const res = await fetch('https://raw.githubusercontent.com/Munotstadt/securitydatacollector/main/data/security_prices.csv');
+    const res = await fetch('https://raw.githubusercontent.com/Munotstadt/accountingdatacollector/refs/heads/main/fx_rates.csv');
     if (!res.ok) throw new Error('HTTP '+res.status);
     const text = await res.text();
     const rows = parseCSV(text);
-    const byPair = {};
+    const byCurrency = {};
     rows.forEach(r => {
-      const name = (r['SecurityName']||'').trim();
-      if (!/\/CHF$/i.test(name)) return;
-      const price = parseFloat(r['Price']);
-      if (isNaN(price)) return;
-      const dt = parseGhDateTime(r['PriceDate']);
+      const currency = (r['Currency']||'').trim().toUpperCase();
+      if (!currency) return;
+      const rate = parseFloat(r['Rate']);
+      if (isNaN(rate)) return;
+      const iso = dmyToISO((r['Date']||'').trim());
+      if (!iso) return;
+      const dt = new Date(iso+'T00:00:00');
       if (isNaN(dt.getTime())) return;
-      if (!byPair[name]) byPair[name] = [];
-      byPair[name].push({date: dt, rate: price});
+      if (!byCurrency[currency]) byCurrency[currency] = [];
+      byCurrency[currency].push({date: dt, rate});
     });
-    Object.keys(byPair).forEach(name => byPair[name].sort((a,b)=>a.date-b.date));
-    FX.rates = byPair;
+    Object.keys(byCurrency).forEach(c => byCurrency[c].sort((a,b)=>a.date-b.date));
+    FX.rates = byCurrency;
     FX.loaded = true;
-    log(`FX rates loaded from securitydatacollector: ${Object.keys(byPair).map(k=>`${k} (${byPair[k].length})`).join(', ') || 'none found'}.`);
+    log(`FX rates loaded from accountingdatacollector: ${Object.keys(byCurrency).map(k=>`${k} (${byCurrency[k].length})`).join(', ') || 'none found'}.`);
     renderAll();
   } catch(err){
-    log('Could not load FX rates from securitydatacollector (Price CHF / Value CHF will stay blank): '+err.message, true);
+    log('Could not load FX rates from accountingdatacollector (Price CHF / Value CHF will stay blank): '+err.message, true);
   } finally {
     FX.loading = false;
   }
@@ -919,13 +770,13 @@ function backfillFxRates(){
   return changed;
 }
 // Best-known CHF rate for a currency as of a given transaction date: the latest known rate at or
-// before that date. Returns null (leave FX / Value CHF blank) if the pair isn't known, hasn't
-// loaded yet, or the transaction predates the earliest available rate for that pair — no
+// before that date. Returns null (leave FX / Value CHF blank) if the currency isn't known, hasn't
+// loaded yet, or the transaction predates the earliest available rate for that currency — no
 // forward- or backward-guessing across dates with no actual data.
 function chfRateForCurrencyAtDate(currency, dateISO){
   if (!currency) return null;
   if (currency.toUpperCase() === 'CHF') return 1;
-  const series = FX.rates[currency.toUpperCase()+'/CHF'];
+  const series = FX.rates[currency.toUpperCase()];
   if (!series || !series.length) return null;
   const target = new Date(dateISO+'T23:59:59');
   let best = null;
@@ -2310,7 +2161,7 @@ function renderPortfolio(){
 // ---------------------------------------------------------------- MASTER RENDER --
 function renderAll(){
   normalizePrices();
-  if (backfillFxRates()) autoSyncToNeon('FX rates auto-filled from securitydatacollector');
+  if (backfillFxRates()) autoSyncToGitHub('FX rates auto-filled from securitydatacollector');
   updateHeaderStatus();
   renderDashboard();
   renderPortfolio();
@@ -2340,7 +2191,7 @@ async function handleDay1ProfitInputChange(e){
   if (!tx) return;
   const raw = input.value.trim();
   tx.day1Profit = raw === '' ? '' : parseFloat(raw);
-  await autoSyncToNeon('Day1Profit edited');
+  await autoSyncToGitHub('Day1Profit edited');
 }
 document.querySelector('#tx-table tbody').addEventListener('change', handleDay1ProfitInputChange);
 document.querySelector('#sec-tx-table tbody').addEventListener('change', handleDay1ProfitInputChange);
@@ -2356,7 +2207,7 @@ async function handleFxRateInputChange(e){
   document.querySelectorAll(`[data-value-chf-for="${tx.id}"]`).forEach(cell => {
     cell.textContent = valueChf === null ? '' : fmtMoney(valueChf, 'CHF');
   });
-  await autoSyncToNeon('FX Rate edited');
+  await autoSyncToGitHub('FX Rate edited');
 }
 document.querySelector('#tx-table tbody').addEventListener('change', handleFxRateInputChange);
 document.querySelector('#sec-tx-table tbody').addEventListener('change', handleFxRateInputChange);
@@ -2391,7 +2242,7 @@ document.querySelector('#portfolio-table tbody').addEventListener('change', asyn
     diffCell.textContent = diff===null ? 'n/a' : fmtPct(diff,1);
     diffCell.style.color = diff===null ? 'var(--ink-soft)' : signColor(diff);
   }
-  await autoSyncToNeon('eROI edited');
+  await autoSyncToGitHub('eROI edited');
 });
 document.querySelectorAll('#portfolio-table thead th[data-key]').forEach(th => {
   th.addEventListener('click', () => {
@@ -2457,7 +2308,7 @@ document.getElementById('sec-save-btn').addEventListener('click', async () => {
   renderPortfolio();
   renderTransactions();
   renderPerformance();
-  await autoSyncToNeon('Master data updated');
+  await autoSyncToGitHub('Master data updated');
 });
 document.getElementById('sec-eroi').addEventListener('change', async (e) => {
   const id = document.getElementById('sec-select').value;
@@ -2470,7 +2321,7 @@ document.getElementById('sec-eroi').addEventListener('change', async (e) => {
   const eroiDiffEl = document.getElementById('sec-eroi-diff');
   eroiDiffEl.textContent = eroiDiff === null ? 'n/a' : fmtPct(eroiDiff,1);
   eroiDiffEl.style.color = eroiDiff === null ? 'var(--ink-soft)' : signColor(eroiDiff);
-  await autoSyncToNeon('eROI edited');
+  await autoSyncToGitHub('eROI edited');
 });
 
 document.getElementById('perf-search').addEventListener('input', renderPerformance);
@@ -2506,14 +2357,14 @@ document.querySelector('#prices-table tbody').addEventListener('change', async (
   const val = parseFloat(input.value);
   if (isNaN(val)) return;
   p.price = val;
-  await autoSyncToNeon('Price edited');
+  await autoSyncToGitHub('Price edited');
   renderAll();
 });
 document.querySelector('#prices-table tbody').addEventListener('click', async (e) => {
   const btn = e.target.closest('.price-delete-btn');
   if (!btn) return;
   DB.prices = DB.prices.filter(x => !(x.assetId === btn.dataset.assetId && x.month === btn.dataset.month));
-  await autoSyncToNeon('Price deleted');
+  await autoSyncToGitHub('Price deleted');
   renderAll();
 });
 document.getElementById('price-add-btn').addEventListener('click', async () => {
@@ -2524,7 +2375,7 @@ document.getElementById('price-add-btn').addEventListener('click', async () => {
   if (!assetId || !month || isNaN(price)){ log('Please choose an asset, a month and a valid price.', true); return; }
   upsertPrice(assetId, month, price, currency);
   document.getElementById('price-add-value').value = '';
-  await autoSyncToNeon('Price added/updated');
+  await autoSyncToGitHub('Price added/updated');
   renderAll();
 });
 
@@ -2555,7 +2406,7 @@ document.getElementById('upload-opp-btn').addEventListener('click', async () => 
     const asOf = document.getElementById('opp-date').value || todayISO();
     importOpportunitiesCSV(await readFile(input), asOf);
     renderAll();
-    await autoSyncToNeon('Investment Opportunities import');
+    await autoSyncToGitHub('Investment Opportunities import');
     document.getElementById('load-opp-filename').textContent = '';
     input.value = '';
   } catch(err){ log('Error loading the Opportunities export: '+err.message, true); btn.disabled = false; }
@@ -2576,7 +2427,7 @@ document.getElementById('upload-act-btn').addEventListener('click', async () => 
   try{
     importTransactionsCSV(await readFile(input), 'Activities-Export');
     renderAll();
-    await autoSyncToNeon('Activities import');
+    await autoSyncToGitHub('Activities import');
     document.getElementById('load-act-filename').textContent = '';
     input.value = '';
   } catch(err){ log('Error loading the Activities export: '+err.message, true); btn.disabled = false; }
@@ -2607,153 +2458,210 @@ function buildMasterCSV(){
   return toCSV(['AssetID','Asset Name','Asset Category','Asset SubCategory','Asset Category_old','Notes','Release Date','Min Horizon','Max Horizon','eROI'], rows);
 }
 
-// ---------------------------------------------------------------- NEON DATA API --
-function neonStatus(msg, isErr){
-  const el = document.getElementById('neon-status');
-  if (!el) return;
+// ---------------------------------------------------------------- GITHUB CONTENTS API --
+// Token lives in memory only, UNLESS the person explicitly ticks "Remember this connection
+// in this browser" — only then is it written to localStorage (opt-in, off by default).
+const GH = {
+  shas: {prices:null, transactions:null, master:null},
+};
+const GH_STORAGE_KEY = 'splint-tracker-gh-config';
+
+function ghSaveConfigToStorage(){
+  try{
+    const cfg = ghConfig();
+    localStorage.setItem(GH_STORAGE_KEY, JSON.stringify(cfg));
+  } catch(err){ log('Could not save connection in this browser: ' + err.message, true); }
+}
+function ghForgetConfigFromStorage(){
+  try{ localStorage.removeItem(GH_STORAGE_KEY); } catch(err){ /* ignore */ }
+}
+function ghLoadConfigFromStorage(){
+  try{
+    const raw = localStorage.getItem(GH_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(err){ return null; }
+}
+function ghMaybePersist(){
+  if (document.getElementById('gh-remember').checked) ghSaveConfigToStorage();
+}
+
+function b64EncodeUnicode(str){
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode(parseInt(p1, 16))));
+}
+function b64DecodeUnicode(str){
+  return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+}
+function ghConfig(){
+  return {
+    owner: document.getElementById('gh-owner').value.trim(),
+    repo: document.getElementById('gh-repo').value.trim(),
+    branch: document.getElementById('gh-branch').value.trim() || 'main',
+    token: document.getElementById('gh-token').value.trim(),
+  };
+}
+function ghHeaders(token){
+  return {
+    'Authorization': 'Bearer ' + token,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+}
+async function ghGetFile(cfg, path){
+  const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}?ref=${encodeURIComponent(cfg.branch)}`;
+  const res = await fetch(url, {headers: ghHeaders(cfg.token)});
+  if (res.status === 404) return null; // file doesn't exist yet
+  if (!res.ok) {
+    const body = await res.text().catch(()=> '');
+    throw new Error(`GET ${path} fehlgeschlagen (${res.status}): ${body.slice(0,200)}`);
+  }
+  const json = await res.json();
+  return {content: b64DecodeUnicode(json.content), sha: json.sha};
+}
+async function ghPutFile(cfg, path, contentText, message, sha){
+  const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`;
+  const body = {
+    message,
+    content: b64EncodeUnicode(contentText),
+    branch: cfg.branch,
+  };
+  if (sha) body.sha = sha;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {...ghHeaders(cfg.token), 'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const errBody = await res.text().catch(()=> '');
+    throw new Error(`PUT ${path} fehlgeschlagen (${res.status}): ${errBody.slice(0,300)}`);
+  }
+  const json = await res.json();
+  return json.content.sha;
+}
+function zurichTimestamp(){
+  const parts = new Intl.DateTimeFormat('de-CH', {
+    timeZone:'Europe/Zurich', day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false,
+  }).formatToParts(new Date());
+  const get = t => parts.find(p=>p.type===t).value;
+  return `${get('day')}.${get('month')}.${get('year')} ${get('hour')}:${get('minute')}:${get('second')}`;
+}
+function ghStatus(msg, isErr){
+  const el = document.getElementById('gh-status');
   el.textContent = msg;
   el.style.color = isErr ? 'var(--red)' : 'var(--ink-soft)';
 }
-function nowStamp(){
-  return new Intl.DateTimeFormat('de-CH', {
-    timeZone:'Europe/Zurich', day:'2-digit', month:'2-digit', year:'numeric',
-    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false,
-  }).format(new Date());
-}
 
-// Maps a Neon splint_masterdata row (snake_case) into the DB.master shape (camelCase) used
-// throughout the app.
-function masterRowToDB(r){
-  return {
-    assetId: r.asset_id, assetName: r.asset_name || r.asset_id,
-    category: r.asset_category || '', subCategory: r.asset_subcategory || '',
-    categoryOld: r.asset_category_old || '', notes: r.notes || '',
-    releaseDate: r.release_date || '', minHorizon: r.min_horizon ?? '',
-    maxHorizon: r.max_horizon ?? '', eROI: r.eroi ?? '',
-  };
-}
-function priceRowToDB(r){
-  return {
-    assetId: r.asset_id, month: r.month,
-    dateDMY: r.price_date ? isoToDMY(r.price_date) : '',
-    price: parseFloat(r.price) || 0, currency: r.currency || 'EUR',
-  };
-}
-function txRowToDB(r){
-  return {
-    id: String(r.transaction_id), type: r.transaction_type, assetId: r.asset_id,
-    dateDMY: r.transaction_date ? isoToDMY(r.transaction_date) : '',
-    dateISO: r.transaction_date || '',
-    amount: parseFloat(r.money_amount) || 0, currency: r.money_currency || 'EUR',
-    pricePerSplint: parseFloat(r.price_per_splint) || 0, fees: parseFloat(r.fees) || 0,
-    confirmation: r.confirmation_doc || '',
-    splints: r.price_per_splint ? Math.round((r.money_amount / r.price_per_splint) * 100) / 100 : 1,
-    day1Profit: (r.day1_profit !== null && r.day1_profit !== undefined) ? r.day1_profit : '',
-    fxRate: (r.fx_rate !== null && r.fx_rate !== undefined) ? r.fx_rate : '',
-  };
-}
-
-async function loadFromNeon(){
-  neonStatus('Loading from Neon …');
+async function performGhLoad(){
+  const cfg = ghConfig();
+  if (!cfg.owner || !cfg.repo || !cfg.token){ ghStatus('Please enter owner, repo and token.', true); return {ok:false}; }
+  ghStatus('Loading from GitHub …');
   try{
-    const [masterData, pricesData, txData] = await Promise.all([
-      neonSelect('splint_masterdata'),
-      neonSelect('splint_prices'),
-      neonSelect('splint_transactions'),
-    ]);
-
-    DB.master = {};
-    (masterData || []).forEach(r => { const m = masterRowToDB(r); DB.master[m.assetId] = m; });
-    DB.prices = (pricesData || []).map(priceRowToDB);
-    DB.transactions = (txData || []).map(txRowToDB);
-
-    neonStatus('Up to date ✓ (' + nowStamp() + ')');
-    log(`Loaded from Neon: ${Object.keys(DB.master).length} assets, ${DB.prices.length} price points, ${DB.transactions.length} transactions.`);
+    const files = [
+      {path:'data/prices.csv', key:'prices', importer: t => importPricesCSV(t)},
+      {path:'data/transactions.csv', key:'transactions', importer: t => importTransactionsCSV(t, 'transactions.csv (GitHub)')},
+      {path:'data/stammdaten.csv', key:'master', importer: t => importMasterCSV(t)},
+    ];
+    for (const f of files){
+      const result = await ghGetFile(cfg, f.path);
+      if (result === null){
+        GH.shas[f.key] = null;
+        log(`${f.path} doesn't exist in the repo yet — will be created on first save.`);
+      } else {
+        GH.shas[f.key] = result.sha;
+        f.importer(result.content);
+      }
+    }
+    renderAll();
+    ghStatus('Up to date ✓ (' + zurichTimestamp() + ')');
+    return {ok:true};
   } catch(err){
-    neonStatus('Error: ' + err.message, true);
-    log('Loading from Neon failed: ' + err.message, true);
+    ghStatus('Error: ' + err.message, true);
+    log('GitHub-Laden fehlgeschlagen: ' + err.message, true);
+    return {ok:false, error:err};
   }
 }
 
-// Upserts the current in-memory master-data dict into splint_masterdata.
-async function syncMasterToNeon(){
-  const rows = Object.values(DB.master).map(m => ({
-    asset_id: m.assetId, asset_name: m.assetName, asset_category: m.category || null,
-    asset_subcategory: m.subCategory || null, asset_category_old: m.categoryOld || null,
-    notes: m.notes || null, release_date: m.releaseDate || null,
-    min_horizon: m.minHorizon === '' ? null : m.minHorizon,
-    max_horizon: m.maxHorizon === '' ? null : m.maxHorizon,
-    eroi: m.eROI === '' ? null : m.eROI,
-  }));
-  if (!rows.length) return;
-  await neonUpsert('splint_masterdata', rows, 'asset_id');
-}
-
-// Upserts current in-memory prices, then deletes any Neon row (by asset_id+month) that no
-// longer exists locally — mirrors the old "full CSV overwrite" semantics for deletions.
-async function syncPricesToNeon(){
-  const rows = DB.prices.map(p => ({
-    asset_id: p.assetId, asset_name: assetName(p.assetId), month: p.month,
-    price_date: p.dateDMY ? dmyToISO(p.dateDMY) : null,
-    price: p.price, currency: p.currency || 'EUR',
-  }));
-  if (rows.length){
-    await neonUpsert('splint_prices', rows, 'asset_id,month');
-  }
-  const remote = await neonSelect('splint_prices', 'asset_id,month');
-  const localKeys = new Set(DB.prices.map(p => p.assetId + '|' + p.month));
-  const toDelete = (remote || []).filter(r => !localKeys.has(r.asset_id + '|' + r.month));
-  for (const r of toDelete){
-    await neonDelete('splint_prices', { asset_id: r.asset_id, month: r.month });
-  }
-}
-
-// Transactions are only ever appended/edited by transaction_id, never bulk-deleted locally, so a
-// plain upsert (no reconciliation delete) matches the app's existing dedup-by-ID behavior.
-async function syncTransactionsToNeon(){
-  const rows = DB.transactions.map(t => ({
-    transaction_id: parseInt(t.id, 10), transaction_type: t.type, asset_id: t.assetId,
-    transaction_date: t.dateISO || null,
-    money_amount: t.amount, money_currency: t.currency || 'EUR',
-    price_per_splint: t.pricePerSplint, price_currency: t.currency || 'EUR',
-    fees: t.fees, fees_currency: t.currency || 'EUR',
-    confirmation_doc: t.confirmation || null,
-    day1_profit: t.day1Profit === '' ? null : t.day1Profit,
-    fx_rate: t.fxRate === '' ? null : t.fxRate,
-  }));
-  if (!rows.length) return;
-  await neonUpsert('splint_transactions', rows, 'transaction_id');
-}
-
-async function autoSyncToNeon(reason){
-  neonStatus('Saving to Neon …');
+async function saveToGitHub(commitMessage){
+  const cfg = ghConfig();
+  if (!cfg.owner || !cfg.repo || !cfg.token) return {ok:false, reason:'no-config'};
+  ghStatus('Saving to GitHub …');
+  const ts = zurichTimestamp();
+  const message = commitMessage || `Update Splint data – ${ts}`;
   try{
-    await syncMasterToNeon();
-    await syncPricesToNeon();
-    await syncTransactionsToNeon();
-    neonStatus('Saved ✓ (' + nowStamp() + ')');
-    log(`Synced to Neon (${reason}).`);
+    const files = [
+      {path:'data/prices.csv', key:'prices', content: buildPricesCSV()},
+      {path:'data/transactions.csv', key:'transactions', content: buildTransactionsCSV()},
+      {path:'data/stammdaten.csv', key:'master', content: buildMasterCSV()},
+    ];
+    for (const f of files){
+      const newSha = await ghPutFile(cfg, f.path, f.content, message, GH.shas[f.key]);
+      GH.shas[f.key] = newSha;
+      log(`${f.path} saved to GitHub.`);
+    }
+    ghStatus('Saved ✓ (' + ts + ')');
+    return {ok:true};
   } catch(err){
-    neonStatus('Error: ' + err.message, true);
-    log('Neon sync failed: ' + err.message, true);
+    ghStatus('Error: ' + err.message, true);
+    log('GitHub save failed: ' + err.message, true);
+    return {ok:false, reason:'error', error:err};
   }
 }
 
-document.getElementById('neon-refresh').addEventListener('click', async () => {
-  await loadFromNeon();
-  renderAll();
+// Pushes prices.csv / transactions.csv / stammdaten.csv to GitHub right after ANY mutating
+// action (Splint export upload, or a Stammdaten edit) so the repo always reflects the current
+// state in real time. No separate "unsaved session" ever accumulates when connected.
+async function autoSyncToGitHub(reason){
+  const cfg = ghConfig();
+  if (!cfg.owner || !cfg.repo || !cfg.token){
+    log('GitHub not connected (owner/repo/token missing) — please export manually or connect.');
+    return;
+  }
+  const ts = zurichTimestamp();
+  const result = await saveToGitHub(`${reason} – ${ts}`);
+  if (result.ok) log(`Automatically saved to GitHub (${reason}).`);
+}
+
+document.getElementById('gh-save').addEventListener('click', async () => {
+  const btn = document.getElementById('gh-save'); btn.disabled = true;
+  const result = await saveToGitHub();
+  if (result.reason === 'no-config') ghStatus('Please enter owner, repo and token.', true);
+  if (result.ok) ghMaybePersist();
+  btn.disabled = false;
 });
-document.getElementById('neon-export').addEventListener('click', () => {
-  downloadText('stammdaten.csv', buildMasterCSV());
-  downloadText('prices.csv', buildPricesCSV());
-  downloadText('transactions.csv', buildTransactionsCSV());
-  log('Exported current data as CSV (stammdaten.csv, prices.csv, transactions.csv).');
+
+document.getElementById('gh-remember').addEventListener('change', (e) => {
+  if (e.target.checked) { ghSaveConfigToStorage(); log('Connection will now be saved in this browser.'); }
+  else { ghForgetConfigFromStorage(); log('Connection will no longer be saved in this browser.'); }
 });
+document.getElementById('gh-forget').addEventListener('click', () => {
+  ghForgetConfigFromStorage();
+  document.getElementById('gh-token').value = '';
+  document.getElementById('gh-remember').checked = false;
+  ghStatus('Saved connection deleted.');
+  log('Saved GitHub connection deleted from this browser.');
+});
+
+// Restore a previously remembered connection (owner/repo/branch/token), if any — and
+// immediately fetch the current GitHub state so the last known state shows right away,
+// with no manual "load" click required.
+(function restoreGhConfig(){
+  const saved = ghLoadConfigFromStorage();
+  if (!saved) return;
+  if (saved.owner) document.getElementById('gh-owner').value = saved.owner;
+  if (saved.repo) document.getElementById('gh-repo').value = saved.repo;
+  if (saved.branch) document.getElementById('gh-branch').value = saved.branch;
+  if (saved.token) document.getElementById('gh-token').value = saved.token;
+  document.getElementById('gh-remember').checked = true;
+  log('Saved GitHub connection loaded from this browser.');
+  if (saved.token) performGhLoad();
+})();
 
 // default opp-date to today
 document.getElementById('opp-date').value = todayISO();
 loadFxRates();
 
+renderAll();
 </script>
 </body>
 </html>

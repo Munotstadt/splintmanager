@@ -2663,7 +2663,7 @@ async function performGhLoad(){
     return {ok:true};
   } catch(err){
     ghStatus('Error: ' + err.message, true);
-    log('GitHub-Laden fehlgeschlagen: ' + err.message, true);
+    log('GitHub load failed: ' + err.message, true);
     return {ok:false, error:err};
   }
 }
@@ -2732,22 +2732,32 @@ document.getElementById('gh-forget').addEventListener('click', () => {
 // immediately fetch the current GitHub state so the last known state shows right away,
 // with no manual "load" click required.
 (function restoreGhConfig(){
-  const saved = ghLoadConfigFromStorage();
-  if (!saved) return;
-  if (saved.owner) document.getElementById('gh-owner').value = saved.owner;
-  if (saved.repo) document.getElementById('gh-repo').value = saved.repo;
-  if (saved.branch) document.getElementById('gh-branch').value = saved.branch;
-  if (saved.token) document.getElementById('gh-token').value = saved.token;
-  document.getElementById('gh-remember').checked = true;
-  log('Saved GitHub connection loaded from this browser.');
-  if (saved.token) performGhLoad();
+  try{
+    const saved = ghLoadConfigFromStorage();
+    if (!saved) return;
+    if (saved.owner) document.getElementById('gh-owner').value = saved.owner;
+    if (saved.repo) document.getElementById('gh-repo').value = saved.repo;
+    if (saved.branch) document.getElementById('gh-branch').value = saved.branch;
+    if (saved.token) document.getElementById('gh-token').value = saved.token;
+    document.getElementById('gh-remember').checked = true;
+    log('Saved GitHub connection loaded from this browser.');
+    if (saved.token) performGhLoad();
+  } catch(err){
+    console.error('restoreGhConfig failed:', err);
+    try{ log('Could not restore the saved GitHub connection: ' + err.message, true); } catch(e2){}
+  }
 })();
 
 // default opp-date to today
-document.getElementById('opp-date').value = todayISO();
-loadFxRates();
+try{ document.getElementById('opp-date').value = todayISO(); } catch(err){ console.error('opp-date init failed:', err); }
+try{ loadFxRates(); } catch(err){ console.error('loadFxRates failed:', err); }
 
-renderAll();
+try{
+  renderAll();
+} catch(err){
+  console.error('renderAll failed on startup:', err);
+  try{ log('Startup error: ' + err.message + ' — open the browser console (F12) for details.', true); } catch(e2){}
+}
 </script>
 </body>
 </html>

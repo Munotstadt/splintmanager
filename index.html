@@ -687,6 +687,49 @@ const neonClient = createClient({
   dataApi: { url: NEON_DATA_API_URL },
 });
 
+// ---------------------------------------------------------------- DIRECT DATA API CALLS --
+// The neon-js SDK's high-level `.from()` query builder was found to intermittently omit the
+// auth token on Data API requests (silent RLS-denied failures on upsert/delete, even moments
+// after a successful authenticated read). To avoid that, all data reads/writes below fetch a
+// fresh JWT directly from Neon Auth's /get-session endpoint and call the Data API's REST
+// endpoints with a plain fetch() — verified reliable, including for 170+ row batch upserts.
+async function getFreshJwt(){
+  const res = await fetch(NEON_AUTH_URL + '/get-session', { credentials: 'include' });
+  const jwt = res.headers.get('set-auth-jwt');
+  if (!jwt) throw new Error('No active Neon Auth session (not signed in, or session expired).');
+  return jwt;
+}
+async function neonApi(path, options = {}){
+  const jwt = await getFreshJwt();
+  const res = await fetch(NEON_DATA_API_URL + path, {
+    ...options,
+    headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json', ...(options.headers || {}) },
+  });
+  if (!res.ok){
+    let msg = res.status + ' ' + res.statusText;
+    try { const j = await res.json(); msg = j.message || msg; } catch(e){ /* ignore */ }
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+function neonSelect(table, columns = '*'){
+  return neonApi('/' + table + '?select=' + encodeURIComponent(columns));
+}
+function neonUpsert(table, rows, onConflict){
+  return neonApi('/' + table + '?on_conflict=' + encodeURIComponent(onConflict), {
+    method: 'POST',
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(rows),
+  });
+}
+function neonDelete(table, filters){
+  // filters: {column: value, ...} -> exact-match .eq() filters, ANDed together
+  const qs = Object.entries(filters).map(([k,v]) => `${encodeURIComponent(k)}=eq.${encodeURIComponent(v)}`).join('&');
+  return neonApi('/' + table + '?' + qs, { method: 'DELETE' });
+}
+
 // ---------------------------------------------------------------- AUTH GATE --
 function setGateMsg(msg, isErr){
   const el = document.getElementById('gate-msg');
@@ -700,9 +743,12 @@ async function checkAccess(){
   // RLS restricts every table to the allowlisted account; a non-empty read from
   // splint_masterdata (166 known assets) is our signal that this signed-in user
   // is actually authorized, not just "has a Google account".
-  const { data, error } = await neonClient.from('splint_masterdata').select('asset_id').limit(1);
-  if (error) return false;
-  return Array.isArray(data) && data.length > 0;
+  try{
+    const data = await neonSelect('splint_masterdata', 'asset_id');
+    return Array.isArray(data) && data.length > 0;
+  } catch(err){
+    return false;
+  }
 }
 
 async function handleSignedIn(user){
@@ -2610,19 +2656,16 @@ function txRowToDB(r){
 async function loadFromNeon(){
   neonStatus('Loading from Neon …');
   try{
-    const [master, prices, tx] = await Promise.all([
-      neonClient.from('splint_masterdata').select('*'),
-      neonClient.from('splint_prices').select('*'),
-      neonClient.from('splint_transactions').select('*'),
+    const [masterData, pricesData, txData] = await Promise.all([
+      neonSelect('splint_masterdata'),
+      neonSelect('splint_prices'),
+      neonSelect('splint_transactions'),
     ]);
-    if (master.error) throw master.error;
-    if (prices.error) throw prices.error;
-    if (tx.error) throw tx.error;
 
     DB.master = {};
-    (master.data || []).forEach(r => { const m = masterRowToDB(r); DB.master[m.assetId] = m; });
-    DB.prices = (prices.data || []).map(priceRowToDB);
-    DB.transactions = (tx.data || []).map(txRowToDB);
+    (masterData || []).forEach(r => { const m = masterRowToDB(r); DB.master[m.assetId] = m; });
+    DB.prices = (pricesData || []).map(priceRowToDB);
+    DB.transactions = (txData || []).map(txRowToDB);
 
     neonStatus('Up to date ✓ (' + nowStamp() + ')');
     log(`Loaded from Neon: ${Object.keys(DB.master).length} assets, ${DB.prices.length} price points, ${DB.transactions.length} transactions.`);
@@ -2643,8 +2686,7 @@ async function syncMasterToNeon(){
     eroi: m.eROI === '' ? null : m.eROI,
   }));
   if (!rows.length) return;
-  const { error } = await neonClient.from('splint_masterdata').upsert(rows, { onConflict: 'asset_id' });
-  if (error) throw error;
+  await neonUpsert('splint_masterdata', rows, 'asset_id');
 }
 
 // Upserts current in-memory prices, then deletes any Neon row (by asset_id+month) that no
@@ -2656,16 +2698,13 @@ async function syncPricesToNeon(){
     price: p.price, currency: p.currency || 'EUR',
   }));
   if (rows.length){
-    const { error } = await neonClient.from('splint_prices').upsert(rows, { onConflict: 'asset_id,month' });
-    if (error) throw error;
+    await neonUpsert('splint_prices', rows, 'asset_id,month');
   }
-  const { data: remote, error: selErr } = await neonClient.from('splint_prices').select('asset_id,month');
-  if (selErr) throw selErr;
+  const remote = await neonSelect('splint_prices', 'asset_id,month');
   const localKeys = new Set(DB.prices.map(p => p.assetId + '|' + p.month));
   const toDelete = (remote || []).filter(r => !localKeys.has(r.asset_id + '|' + r.month));
   for (const r of toDelete){
-    const { error } = await neonClient.from('splint_prices').delete().eq('asset_id', r.asset_id).eq('month', r.month);
-    if (error) throw error;
+    await neonDelete('splint_prices', { asset_id: r.asset_id, month: r.month });
   }
 }
 
@@ -2683,8 +2722,7 @@ async function syncTransactionsToNeon(){
     fx_rate: t.fxRate === '' ? null : t.fxRate,
   }));
   if (!rows.length) return;
-  const { error } = await neonClient.from('splint_transactions').upsert(rows, { onConflict: 'transaction_id' });
-  if (error) throw error;
+  await neonUpsert('splint_transactions', rows, 'transaction_id');
 }
 
 async function autoSyncToNeon(reason){

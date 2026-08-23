@@ -6,6 +6,7 @@
 <title>Splint Tracker — Munotstadt</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --red:#E30613;
@@ -154,6 +155,8 @@
   button.btn.ghost{background:none; color:var(--ink); border:1px solid var(--line);}
   button.btn.ghost:hover{border-color:var(--ink);}
   button.btn:disabled{opacity:.4; cursor:not-allowed;}
+  button.btn-excel{background:none; border:none; padding:2px; cursor:pointer; border-radius:3px; line-height:0;}
+  button.btn-excel:hover{background:var(--hover, #f2f3f4);}
 
   .search-box{position:relative; flex:1; min-width:180px;}
   .search-box input{width:100%;}
@@ -368,6 +371,7 @@
             <th data-key="valueChf" class="num">Value CHF</th>
             <th data-key="id">Trans. ID</th>
             <th>Receipt</th>
+            <th>Booking Entries</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -1165,6 +1169,45 @@ function xirr(cashflows){
   return (lo + hi) / 2;
 }
 
+// ---------------------------------------------------------------- BOOKING ENTRIES (splint_entries.xlsx) --
+// Builds a 2-tab workbook (splint_accounting_entry, splint_security_entry) for a single Splint
+// transaction, following the fixed template Philipp supplied. Fields in [Brackets] in that
+// template vary per transaction (comment, amounts, date); everything else (account IDs, TrxArt,
+// PartyNo, ProjectID, TrxTypeID, EntryNo) is a fixed constant taken directly from the template's
+// one worked example (a purchase) — for sales, only the amount signs are flipped (cash in /
+// investment out instead of cash out / investment in). If the sale-side codes should differ,
+// they can be adjusted here once confirmed.
+function buildBookingEntriesWorkbook(txId){
+  const t = DB.transactions.find(x => x.id === txId);
+  if (!t) return null;
+  const m = DB.master[t.assetId];
+  const category = (m && m.category) || '';
+  const comment = `${category}${category?': ':''}${assetName(t.assetId)}`;
+  const isPurchase = /purchase/i.test(t.type);
+  const valueChf = (t.fxRate !== '' && t.fxRate !== undefined && t.fxRate !== null && !isNaN(t.fxRate))
+    ? Math.round(t.amount * Number(t.fxRate) * 100) / 100 : null;
+  const amtLC = Math.round(t.amount * 100) / 100;
+  // purchase: cash account (1060) decreases, investment account (1816) increases
+  // sale: cash account (1060) increases, investment account (1816) decreases
+  const sign = isPurchase ? 1 : -1;
+
+  const accountingRows = [
+    ['NULL', 1060, 8352, comment, 13946, 'Splint Real Assets / Art', '', '', 'INV_Splint_2023 ff.', valueChf===null?'':-sign*valueChf, t.currency, -sign*amtLC, t.dateDMY, 'NULL', 'SplintManager', 'NULL', 'NULL'],
+    ['NULL', 1816, 8352, comment, 13946, 'Splint Real Assets / Art', '', '', 'INV_Splint_2023 ff.', valueChf===null?'':sign*valueChf, t.currency, sign*amtLC, t.dateDMY, 'NULL', 'SplintManager', 'NULL', 'NULL'],
+  ];
+  const accountingHeader = ['TrxNo','MainID','EntryNo','Comment','TrxArt','PartyNo','Location','Shop','ProjectID','AmtCHF','Cry','AmtLC','Valuta','DateClearance','EntrySource','DateAdd','DateModified'];
+
+  const securityRow = [21000, 1816, 10, 222, t.dateDMY, t.dateDMY, isPurchase?t.splints:-t.splints, t.currency, valueChf===null?'':valueChf, amtLC, 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', comment, 8352, 'Pending', 'NULL', 'NULL', 'SplintManager', 'NULL'];
+  const securityHeader = ['MainID','CustodyID','ProjectID','TrxTypeID','Date','Valuta','Quantity','Cry','AmtCHF','AmtLC','ExpCHF','ExpLC','Price_CHF','Price_Cry','Price_LC','Comments','EntryNo','CheckpointStatus','CheckpointStatusComment','CheckpointID','Source','DateModified'];
+
+  const wb = XLSX.utils.book_new();
+  const wsAcc = XLSX.utils.aoa_to_sheet([accountingHeader, ...accountingRows]);
+  const wsSec = XLSX.utils.aoa_to_sheet([securityHeader, securityRow]);
+  XLSX.utils.book_append_sheet(wb, wsAcc, 'splint_accounting_entry');
+  XLSX.utils.book_append_sheet(wb, wsSec, 'splint_security_entry');
+  return wb;
+}
+
 function computeSecurityPerformance(assetId){
   const txs = DB.transactions.filter(t => t.assetId === assetId);
   let invested = 0, divested = 0;
@@ -1747,8 +1790,13 @@ function renderTransactions(){
       <td class="num" data-value-chf-for="${escapeHtml(r.id)}">${r.valueChf===null?'':fmtMoney(r.valueChf,'CHF')}</td>
       <td class="mono">${r.id}</td>
       <td>${r.confirmation ? `<span class="hint mono" title="${escapeHtml(r.confirmation)}">Receipt</span>` : ''}</td>
+      <td style="text-align:center;">
+        ${/purchase/i.test(r.type) ? `<button class="btn-excel" data-tx-id="${escapeHtml(r.id)}" title="Kaufbeleg" aria-label="Kaufbeleg">
+          <svg width="20" height="20" viewBox="0 0 20 20"><rect x="1" y="1" width="18" height="18" rx="2" fill="#1D6F42"/><text x="10" y="14.5" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="9.5" font-weight="700" fill="#fff">X</text></svg>
+        </button>` : ''}
+      </td>
     </tr>
-  `).join('') || `<tr><td colspan="12" class="hint">No transactions found.</td></tr>`;
+  `).join('') || `<tr><td colspan="13" class="hint">No transactions found.</td></tr>`;
 
   // header sort arrows
   document.querySelectorAll('#tx-table thead th').forEach(th => {
@@ -2211,6 +2259,40 @@ async function handleFxRateInputChange(e){
 }
 document.querySelector('#tx-table tbody').addEventListener('change', handleFxRateInputChange);
 document.querySelector('#sec-tx-table tbody').addEventListener('change', handleFxRateInputChange);
+
+// Saves a workbook via the browser's native "Save As" dialog when supported (Chrome/Edge), so the
+// person can navigate to their preferred folder — a website can never pre-fill an exact OS path
+// like C:\Users\...\Data Management for security reasons, but the native picker lets them choose
+// it, and most browsers default back to that same folder on subsequent saves from this page.
+// Falls back to a normal browser download (no folder picker) on browsers that don't support it.
+async function saveWorkbookAs(wb, suggestedName){
+  if (window.showSaveFilePicker){
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        types: [{description: 'Excel Workbook', accept: {'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']}}],
+      });
+      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+      const writable = await handle.createWritable();
+      await writable.write(new Blob([wbout], {type:'application/octet-stream'}));
+      await writable.close();
+      return true;
+    } catch(err){
+      if (err.name === 'AbortError') return false; // person cancelled the dialog
+      log('Save dialog failed, falling back to a normal download: '+err.message, true);
+    }
+  }
+  XLSX.writeFile(wb, suggestedName);
+  return true;
+}
+document.querySelector('#tx-table tbody').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.btn-excel');
+  if (!btn) return;
+  const wb = buildBookingEntriesWorkbook(btn.dataset.txId);
+  if (!wb){ log('Could not build booking entries: transaction not found.', true); return; }
+  const saved = await saveWorkbookAs(wb, 'splint_entries.xlsx');
+  if (saved) log(`Booking entries generated for transaction ${btn.dataset.txId} (splint_entries.xlsx).`);
+});
 
 // Kursverlauf: tap a point/bar to inspect its exact value (touch-friendly alternative to hover tooltips)
 document.getElementById('sec-chart-card').addEventListener('click', (e) => {

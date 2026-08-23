@@ -21,7 +21,7 @@ Keine Datenbank, kein Backend, kein Build-Schritt — läuft direkt als statisch
 Vollständige Tabelle aller Assets (inkl. verkaufter): Splints, Wert, Kosten, Return absolut/relativ, IRR p.a., **eROI** (manuell erfassbar) und **eROI vs. IRR**, 1. Kauf, Exit-Datum, **Horizont bis** (Release-Jahr + Ø Min/Max-Investitionshorizont, `n/a` bei verkauften Assets), Kategorie/Subkategorie. Durchsuchbar, sortierbar, Filter Alle/Gehalten/Verkauft, Total-/Subtotal-Zeile.
 
 ### Transaktionen
-Alle Transaktionen mit Filter/Suche, sortierbar. Spalte **Day1Profit** (EUR, manueller Input, wird direkt in der Tabelle erfasst und automatisch synchronisiert).
+Alle Transaktionen mit Filter/Suche, sortierbar. Spalte **Day1Profit** (EUR, manueller Input, wird direkt in der Tabelle erfasst und automatisch synchronisiert). Spalten **Price CHF** (editierbarer FX-Kurs, siehe Abschnitt "FX / CHF-Umrechnung") und **Value CHF** (berechnet). Ganz rechts: **Booking Entries** — nur bei Kauftransaktionen ein Excel-Icon ("Kaufbeleg" beim Hover), das eine `splint_entries.xlsx` mit zwei Tabs (`splint_accounting_entry`, `splint_security_entry`) für genau diese Transaktion generiert, gemäss fixer Buchungsvorlage (siehe unten).
 
 ### Wertschriften (Security-Detail)
 - Editierbare Stammdaten: Asset-Name, Kategorie, Subkategorie, Asset Category_old, **eROI (%)**, Notizen
@@ -92,6 +92,23 @@ Date, Currency, Rate, CollectedAt
 
 `Value CHF` selbst wird nie gespeichert, sondern immer live aus `Money Amount × FX Rate` berechnet.
 
+## Booking Entries (`splint_entries.xlsx`)
+
+Nur bei **Kauftransaktionen** (Primary market purchase, Marketplace purchase) lässt sich über das Excel-Icon ganz rechts in der Transaktionen-Tabelle eine Buchungsvorlage generieren (via [SheetJS](https://sheetjs.com/), geladen von cdnjs.cloudflare.com — reine Client-Erzeugung, kein Server). Bei Verkäufen wird kein Icon angezeigt. Struktur exakt nach der von Philipp gelieferten Vorlage:
+
+**Tab `splint_accounting_entry`** — 2 Zeilen (Doppelbuchung):
+| Feld | Kauf: MainID 1060 (Cash) | Kauf: MainID 1816 (Investment) |
+|---|---|---|
+| AmtCHF / AmtLC | negativ (Geldabfluss) | positiv (Bestandszunahme) |
+
+Bei einem Verkauf werden die Vorzeichen gespiegelt (1060 positiv/Geldzufluss, 1816 negativ/Bestandsabnahme) — **Annahme**, da die Vorlage nur ein Kaufbeispiel enthielt.
+
+**Tab `splint_security_entry`** — 1 Zeile: Quantity positiv bei Kauf, negativ bei Verkauf; AmtCHF/AmtLC immer als Betrag.
+
+Konstante Werte (nicht `[in eckigen Klammern]` in der Vorlage, daher unverändert für jede Transaktion übernommen): `MainID 1060/1816/21000`, `EntryNo 8352`, `TrxArt 13946`, `PartyNo "Splint Real Assets / Art"`, `ProjectID "INV_Splint_2023 ff."` bzw. `10`, `TrxTypeID 222`. **Diese Codes stammen alle aus dem einen Kauf-Beispiel der Vorlage** — falls Verkäufe einen anderen `TrxTypeID` oder eine andere `EntryNo`-Logik brauchen, bitte Bescheid geben.
+
+Variable Felder: `Comment`/`Comments` = `Kategorie: Asset-Name`, `AmtCHF`/`Price_CHF` = `Money Amount × FX Rate` (2 Dezimalstellen), `AmtLC` = `Money Amount` (2 Dezimalstellen), `Valuta`/`Date` = Transaktionsdatum.
+
 ## Setup
 
 1. Neues **privates oder öffentliches** Repo `splintdatacollector` erstellen
@@ -112,3 +129,4 @@ Es existiert **keine öffentliche/dokumentierte API** von Splint Invest. Die Akt
 - `eROI`, `Day1Profit`, Stammdaten (Kategorie/Notizen/Horizont) sind rein manuelle Felder ohne externe Quelle
 - `FX Rate`/`Value CHF` bleiben leer für Transaktionen vor dem ältesten Datenpunkt in `accountingdatacollector/fx_rates.csv`
 - Kein Multi-User-Konflikt-Handling über die einfache SHA-Versionierung hinaus (Last-Write-Wins bei gleichzeitigem Schreiben)
+- Speicherort für `splint_entries.xlsx`: aus Sicherheitsgründen kann keine Website einen exakten Ordnerpfad vorgeben. In Chrome/Edge öffnet sich der native "Speichern unter"-Dialog (Ordner selbst wählen — der Browser merkt sich diesen meist für spätere Speicherungen von dieser Seite); in Browsern ohne File System Access API (Safari, Firefox) landet die Datei automatisch im Standard-Downloads-Ordner

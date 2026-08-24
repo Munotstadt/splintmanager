@@ -2387,7 +2387,7 @@ function buildSplintEntriesWorkbook(t){
   const aName = assetName(t.assetId);
   const comment = `${category}: ${aName}`;
   const partyNo = `Splint Real Assets / ${category}`;
-  const entryNo = parseInt(t.id, 10);
+  const entryNo = 8352; // fixed constant, same in both tabs — do not derive from transaction ID
   const currency = t.currency || 'EUR';
   const amtLC = Math.round(t.amount * 100) / 100;
   const quantity = (t.splints !== undefined && t.splints !== null) ? t.splints
@@ -2411,7 +2411,7 @@ function buildSplintEntriesWorkbook(t){
   ['M2','M3'].forEach(ref => { wsAccounting[ref].z = 'mm-dd-yy'; });
 
   const securityHeader = ['MainID','CustodyID','ProjectID','TrxTypeID','Date','Valuta','Quantity','Cry','AmtCHF','AmtLC','ExpCHF','ExpLC','Price_CHF','Price_Cry','Price_LC','Comments','EntryNo','CheckpointStatus','CheckpointStatusComment','CheckpointID','Source','DateModified'];
-  const securityRow = [21000, 1816, 10, 222, dateVal, dateVal, quantity, currency, valueChf, amtLC, 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', comment, entryNo, 'Pending', 'NULL', 'NULL', 'SplintManager', 'NULL'];
+  const securityRow = [21000, 1816, 10, 222, dateVal, dateVal, quantity, currency, valueChf, amtLC, 0, 0, 'NULL', 'NULL', 'NULL', comment, entryNo, 'Pending', 'NULL', 'NULL', 'SplintManager', 'NULL'];
   const wsSecurity = XLSX.utils.aoa_to_sheet([securityHeader, securityRow]);
   ['E2','F2'].forEach(ref => { wsSecurity[ref].z = 'mm-dd-yy'; });
   wsSecurity['G2'].z = '#,##0.00';

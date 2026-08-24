@@ -26,9 +26,10 @@ Vollständige Tabelle aller Assets (inkl. verkaufter): Splints, Wert, Kosten, Re
 Alle Transaktionen mit Filter/Suche, sortierbar. Spalten **Day1Profit** und **FX Rate** (jeweils manueller Input, direkt in der Tabelle erfasst und automatisch synchronisiert).
 
 **Buchungsbeleg-Export (nur Kauftransaktionen):** ganz rechts in der Tabelle erscheint bei jeder Kauftransaktion (`Primary market purchase`, `Marketplace purchase`) ein Excel-Icon (Hover-Tooltip *"Kaufbeleg"*). Klick erzeugt eine `splint_entries.xlsx` mit den zwei Tabs `splint_accounting_entry` (doppelte Buchung: Konto 1060 negativ / Konto 1816 positiv) und `splint_security_entry` (Bestandsbuchung), exakt im Format der Munotstadt-Buchhaltungsimport-Vorlage:
-- **EntryNo** = Splint-Transaktions-ID (verknüpft beide Tabs derselben Buchung)
+- **EntryNo** = fixer Wert `8352` in beiden Tabs (gemäss Vorgabe, nicht aus der Transaktion abgeleitet)
 - **Comment/Comments** = `{Kategorie}: {Asset-Name}`
 - **AmtCHF/Value CHF** = Betrag × FX-Rate der Transaktion (aus der Spalte "FX Rate"; falls dort leer, wird der zum Datum passende Kurs aus den geladenen FX-Daten verwendet — ist auch das nicht verfügbar, bricht der Export mit einer Fehlermeldung ab, statt einen falschen/leeren Wert zu schreiben)
+- **ExpCHF/ExpLC** = fest `0` (nicht `NULL`)
 - Alle übrigen Felder sind fixe Konstanten gemäss Vorlage (TrxArt, ProjectID, TrxTypeID, MainID/CustodyID, EntrySource, CheckpointStatus etc.)
 
 Speicherort: der Browser schlägt beim Speichern immer den Dateinamen `splint_entries.xlsx` vor. In Chromium-Browsern (Chrome, Edge) öffnet sich dafür der native "Speichern unter"-Dialog — aus Sicherheitsgründen kann eine Webseite dabei **keinen Startordner erzwingen**; einmalig manuell zu `C:\Users\phili\OneDrive\1_Finance\Data Management` navigieren, danach merkt sich der Browser diesen Ordner pro Seite automatisch für alle künftigen Exporte. In Browsern ohne diese Funktion (Firefox, Safari) landet die Datei im Standard-Download-Ordner und muss manuell verschoben werden.

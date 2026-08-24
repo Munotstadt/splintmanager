@@ -27,6 +27,8 @@ Alle Transaktionen mit Filter/Suche, sortierbar. Spalten **Day1Profit** und **FX
 
 **Buchungsbeleg-Export (nur Kauftransaktionen):** ganz rechts in der Tabelle erscheint bei jeder Kauftransaktion (`Primary market purchase`, `Marketplace purchase`) ein Excel-Icon (Hover-Tooltip *"Kaufbeleg"*). Klick erzeugt eine `splint_entries.xlsx` mit den zwei Tabs `splint_accounting_entry` (doppelte Buchung: Konto 1060 negativ / Konto 1816 positiv) und `splint_security_entry` (Bestandsbuchung), exakt im Format der Munotstadt-Buchhaltungsimport-Vorlage:
 - **EntryNo** = fixer Wert `8352` in beiden Tabs (gemäss Vorgabe, nicht aus der Transaktion abgeleitet)
+- **PartyNo** (Tab `splint_accounting_entry`) = fixer Wert `21000` (nicht aus der Asset-Kategorie abgeleitet)
+- **ProjectID** (Tab `splint_accounting_entry`) = fixer Wert `10` (nicht `INV_Splint_2023 ff.`)
 - **Comment/Comments** = `{Kategorie}: {Asset-Name}`
 - **AmtCHF/Value CHF** = Betrag × FX-Rate der Transaktion (aus der Spalte "FX Rate"; falls dort leer, wird der zum Datum passende Kurs aus den geladenen FX-Daten verwendet — ist auch das nicht verfügbar, bricht der Export mit einer Fehlermeldung ab, statt einen falschen/leeren Wert zu schreiben)
 - **ExpCHF/ExpLC** = fest `0` (nicht `NULL`)

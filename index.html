@@ -2386,7 +2386,7 @@ function buildSplintEntriesWorkbook(t){
   const category = master.category || '';
   const aName = assetName(t.assetId);
   const comment = `${category}: ${aName}`;
-  const partyNo = `Splint Real Assets / ${category}`;
+  const partyNo = 21000; // fixed constant
   const entryNo = 8352; // fixed constant, same in both tabs — do not derive from transaction ID
   const currency = t.currency || 'EUR';
   const amtLC = Math.round(t.amount * 100) / 100;
@@ -2403,8 +2403,8 @@ function buildSplintEntriesWorkbook(t){
 
   const accountingHeader = ['TrxNo','MainID','EntryNo','Comment','TrxArt','PartyNo','Location','Shop','ProjectID','AmtCHF','Cry','AmtLC','Valuta','DateClearance','EntrySource','DateAdd','DateModified'];
   const accountingRows = [
-    ['NULL', 1060, entryNo, comment, 13946, partyNo, null, null, 'INV_Splint_2023 ff.', -valueChf, currency, -amtLC, dateVal, 'NULL', 'SplintManager', 'NULL', 'NULL'],
-    ['NULL', 1816, entryNo, comment, 13946, partyNo, null, null, 'INV_Splint_2023 ff.',  valueChf, currency,  amtLC, dateVal, 'NULL', 'SplintManager', 'NULL', 'NULL'],
+    ['NULL', 1060, entryNo, comment, 13946, partyNo, null, null, 10, -valueChf, currency, -amtLC, dateVal, 'NULL', 'SplintManager', 'NULL', 'NULL'],
+    ['NULL', 1816, entryNo, comment, 13946, partyNo, null, null, 10,  valueChf, currency,  amtLC, dateVal, 'NULL', 'SplintManager', 'NULL', 'NULL'],
   ];
   const wsAccounting = XLSX.utils.aoa_to_sheet([accountingHeader, ...accountingRows]);
   ['L2','L3'].forEach(ref => { wsAccounting[ref].z = '_ * #,##0.00_ ;_ * \\-#,##0.00_ ;_ * "-"??_ ;_ @_ '; });
